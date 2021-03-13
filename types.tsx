@@ -8,10 +8,10 @@ export type BottomTabParamList = {
   TabTwo: undefined;
 };
 
-export type TabOneParamList = {
-  TabOneScreen: undefined;
+export type RecipesParamList = {
+  RecipesScreen: undefined;
 };
 
-export type TabTwoParamList = {
-  TabTwoScreen: undefined;
+export type CaptureParamList = {
+  CaptureScreen: undefined;
 };
