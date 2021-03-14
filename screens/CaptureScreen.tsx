@@ -1,20 +1,12 @@
-import React, {useState} from 'react';
-import {Button, StyleSheet, Image} from 'react-native';
-import ImagePicker from 'react-native-image-crop-picker';
-import { Circle } from 'react-native-progress';
+import React, {useEffect, useState} from 'react';
+import {useWindowDimensions, StyleSheet, Image, Button} from 'react-native';
+import AnimatedProgressWheel from 'react-native-progress-wheel';
 import TesseractOcr, {
   LANG_ENGLISH,
   useEventListener,
 } from 'react-native-tesseract-ocr';
 import { Text, View } from '../components/Themed';
-
-const DEFAULT_HEIGHT = 500;
-const DEFAULT_WITH = 600;
-const defaultPickerOptions = {
-  cropping: true,
-  height: DEFAULT_HEIGHT,
-  width: DEFAULT_WITH,
-};
+import PickImage from '../components/PickImage';
 
 type ImageUri = {uri: string} | null
 
@@ -22,10 +14,26 @@ export default function CaptureScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [imgSrc, setImgSrc] = useState<ImageUri>(null);
-  const [text, setText] = useState('');
+  const [imageWidth, setImageWidth] = useState<number>(-1);
+  const [imageHeight, setImageHeight] = useState<number>(-1);
+  const [text, setText] = useState<string>();
+  const window = useWindowDimensions();
+
   useEventListener('onProgressChange', (p: {percent: number}) => {
     setProgress(p.percent / 100);
   });
+
+  useEffect(() => {
+    if (imgSrc) {
+      Image.getSize(imgSrc.uri, (width, height) => {
+        setImageWidth(width);
+        setImageHeight(height);
+      })
+    } else {
+      setImageWidth(-1);
+        setImageHeight(-1);
+    }
+  }, [imgSrc])
 
   const recognizeTextFromImage = async (path: any) => {
     setIsLoading(true);
@@ -47,64 +55,43 @@ export default function CaptureScreen() {
     setProgress(0);
   };
 
-  const recognizeFromPicker = async (options = defaultPickerOptions) => {
-    try {
-      const image = await ImagePicker.openPicker(options);
-      setImgSrc({uri: image.path});
-      await recognizeTextFromImage(image.path);
-    } catch (err) {
-      if (err.message !== 'User cancelled image selection') {
-        console.error(err);
-      }
-    }
-  };
+  const maxImageDimensions = {
+    maxWidth: window.width,
+    maxHeight: window.height * 0.5,
+    width: window.width,
+    height: window.height * 0.5
+  }
 
-  const recognizeFromCamera = async (options = defaultPickerOptions) => {
-    try {
-      const image = await ImagePicker.openCamera(options);
-      setImgSrc({uri: image.path});
-      await recognizeTextFromImage(image.path);
-    } catch (err) {
-      if (err.message !== 'User cancelled image selection') {
-        console.error(err);
-      }
-    }
-  };
+  const imageAspectRatio = imageHeight > 0 ? imageWidth / imageHeight : 1;
+  const imageDimensions = {
+    width: imageAspectRatio > 0.5 ? maxImageDimensions.maxWidth : maxImageDimensions.maxWidth * imageAspectRatio,
+    height: imageAspectRatio > 0.5 ? maxImageDimensions.maxHeight / imageAspectRatio : maxImageDimensions.maxHeight,
+  }
+  maxImageDimensions.height = imageDimensions.height
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Capture</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <Text style={styles.instructions}>Select an image source:</Text>
-      <View style={styles.options}>
-        <View style={styles.button}>
-          <Button
-            disabled={isLoading}
-            title="Camera"
-            onPress={() => {
-              recognizeFromCamera();
-            }}
-          />
-        </View>
-        <View style={styles.button}>
-          <Button
-            disabled={isLoading}
-            title="Picker"
-            onPress={() => {
-              recognizeFromPicker();
-            }}
-          />
-        </View>
-      </View>
+      <PickImage onChange={(uri: string) => {
+        setImgSrc({uri})
+      }} />
       {imgSrc && (
-        <View style={styles.imageContainer}>
-          <Image style={styles.image} source={imgSrc} />
-          {isLoading ? (
-            <Circle showsText progress={progress} />
-          ) : (
-            <Text>{text}</Text>
-          )}
-        </View>
+        <>
+          <View style={{...styles.imageContainer, ...maxImageDimensions}}>
+            <Image style={{...styles.image, ...imageDimensions}} source={imgSrc} />
+          </View>
+          <View style={styles.buttons}>
+            <Button title="Capture Text" onPress={recognizeTextFromImage} />
+            <Button title="Cancel" onPress={() => setImgSrc(null)} />
+          </View>
+        </>
+      )}
+      {(isLoading || text) && isLoading ? (
+        <AnimatedProgressWheel progress={progress} />
+      ) : (
+        <Text>{text}</Text>
       )}
     </View>
   );
@@ -116,10 +103,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  options: {
+  buttons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     padding: 10,
+    width: '100%',
   },
   button: {
     marginHorizontal: 10,
@@ -127,11 +115,15 @@ const styles = StyleSheet.create({
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    borderColor: 'red',
+    borderWidth: 1,
+    borderStyle:'solid',
   },
   image: {
+    display: 'flex',
     marginVertical: 15,
-    height: DEFAULT_HEIGHT / 2.5,
-    width: DEFAULT_WITH / 2.5,
+    width: '100%',
+    height: '100%'
   },
   title: {
     fontSize: 20,
