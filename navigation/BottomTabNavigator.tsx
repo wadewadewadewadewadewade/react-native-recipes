@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
@@ -8,6 +7,7 @@ import useColorScheme from '../hooks/useColorScheme';
 import RecipesScreen from '../screens/RecipesScreen';
 import CaptureScreen from '../screens/CaptureScreen';
 import { BottomTabParamList, RecipesParamList, CaptureParamList } from '../types';
+import { Text } from 'react-native';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -22,14 +22,14 @@ export default function BottomTabNavigator() {
         name="TabOne"
         component={TabOneNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" title="Recipes" color={color} />,
         }}
       />
       <BottomTab.Screen
         name="TabTwo"
         component={TabTwoNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" title="Capture" color={color} />,
         }}
       />
     </BottomTab.Navigator>
@@ -38,8 +38,8 @@ export default function BottomTabNavigator() {
 
 // You can explore the built-in icon families and icons on the web at:
 // https://icons.expo.fyi/
-function TabBarIcon(props: { name: React.ComponentProps<typeof Ionicons>['name']; color: string }) {
-  return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
+function TabBarIcon(props: { name: string; title: string; color: string }) {
+  return (<Text style={{color: props.color}}>{props.title}</Text>); //<Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
 }
 
 // Each tab has its own navigation stack, you can read more about this pattern here:
