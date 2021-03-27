@@ -1,11 +1,26 @@
 import React, { useEffect } from 'react';
-import { Button, StyleSheet, Platform } from 'react-native';
-import { View } from '../components/Themed';
+import { Button, Platform } from 'react-native';
+import { Div, Text } from 'react-native-magnus';
 import ImagePicker from 'react-native-image-crop-picker';
 
 export type PickerPermissions = {
   library: boolean
   camera: boolean
+}
+
+export type PickerType = {
+  "cropRect": {
+    "height": number,
+    "width": number,
+    "y": number,
+    "x": number
+  },
+  "modificationDate": string,
+  "size":number,
+  "mime":string,
+  "height": number,
+  "width":number,
+  "path":string
 }
 
 const DEFAULT_HEIGHT = 500;
@@ -19,7 +34,7 @@ const defaultPickerOptions = {
 export default function PickImage({
   onChange
 }: {
-  onChange: (uri: string) => void
+  onChange: (image: PickerType) => void
 }) {
   // const permissions = useRef<PickerPermissions>({library: false, camera: false})
 
@@ -42,8 +57,8 @@ export default function PickImage({
 
   const pickImage = async (options = defaultPickerOptions) => {
     try {
-      const image = ((await ImagePicker.openPicker(options)) as unknown) as {path: string};
-      onChange(image.path);
+      const image = await ImagePicker.openPicker(options) as PickerType;
+      onChange(image);
     } catch (err) {
       if (err.message !== 'User cancelled image selection') {
         console.error(err);
@@ -53,8 +68,8 @@ export default function PickImage({
 
   const captureImage = async (options = defaultPickerOptions) => {
     try {
-      const image = ((await ImagePicker.openCamera(options)) as unknown) as {path: string};
-      onChange(image.path);
+      const image = await ImagePicker.openCamera(options) as PickerType;
+      onChange(image);
     } catch (err) {
       if (err.message !== 'User cancelled image selection') {
         console.error(err);
@@ -63,22 +78,11 @@ export default function PickImage({
   };
 
   return (
-    <View style={styles.options}>
+    <Div m="md">
+      <Text mb="xl" fontWeight="bold" fontSize="xl">Select an image source:</Text>
       <Button title="Pick an image from camera roll" onPress={() => pickImage()} />
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+      <Div mb="xl"></Div>
       <Button title="Take a picture with the camera" onPress={() => captureImage()} />
-    </View>
+    </Div>
   );
 }
-const styles = StyleSheet.create({
-  options: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    padding: 10,
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});

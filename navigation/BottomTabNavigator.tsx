@@ -20,10 +20,11 @@ export default function BottomTabNavigator() {
         activeTintColor: Colors[colorScheme].tint,
         showLabel: false,
         style: {
-          marginLeft: 50,
-          marginRight: 50,
+          marginLeft: 100,
+          marginRight: 100,
           marginBottom: 30,
           borderRadius: 35,
+          paddingTop: 10,
           paddingBottom: 10,
           borderTopWidth: 0,
           position: 'absolute',
