@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-
+import Ionicons from 'react-native-ionicons'
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import RecipesScreen from '../screens/RecipesScreen';
@@ -17,29 +17,37 @@ export default function BottomTabNavigator() {
   return (
     <BottomTab.Navigator
       initialRouteName="TabOne"
-      tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
+      tabBarOptions={{
+        activeTintColor: Colors[colorScheme].tint,
+        showLabel: false,
+        style: {
+          marginLeft: 50,
+          marginRight: 50,
+          marginBottom: 30,
+          borderRadius: 35,
+          paddingBottom: 10,
+          borderTopWidth: 0,
+          position: 'absolute',
+          paddingHorizontal: 20,
+          backgroundColor: Colors[colorScheme].tabBarBackground,
+      }
+      }}>
       <BottomTab.Screen
         name="TabOne"
         component={TabOneNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" title="Recipes" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={25} name="journal" color={color} />,
         }}
       />
       <BottomTab.Screen
         name="TabTwo"
         component={TabTwoNavigator}
         options={{
-          tabBarIcon: ({ color }) => <TabBarIcon name="ios-code" title="Capture" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={25} name="camera" color={color} />,
         }}
       />
     </BottomTab.Navigator>
   );
-}
-
-// You can explore the built-in icon families and icons on the web at:
-// https://icons.expo.fyi/
-function TabBarIcon(props: { name: string; title: string; color: string }) {
-  return (<Text style={{color: props.color}}>{props.title}</Text>); //<Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
 }
 
 // Each tab has its own navigation stack, you can read more about this pattern here:

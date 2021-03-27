@@ -73,10 +73,14 @@ export default function CaptureScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Capture</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <Text style={styles.instructions}>Select an image source:</Text>
-      <PickImage onChange={(uri: string) => {
-        setImgSrc({uri})
-      }} />
+      {(!isLoading && !text && !imgSrc) && (
+        <>
+          <Text style={styles.instructions}>Select an image source:</Text>
+          <PickImage onChange={(uri: string) => {
+            setImgSrc({uri})
+          }} />
+        </>
+      )}
       {imgSrc && (
         <>
           <View style={{...styles.imageContainer, ...maxImageDimensions}}>
