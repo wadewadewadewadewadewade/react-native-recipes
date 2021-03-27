@@ -71,7 +71,6 @@ export default function CaptureScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Capture</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       {(!isLoading && !text && !imgSrc) && (
         <>
@@ -87,7 +86,7 @@ export default function CaptureScreen() {
             <Image style={{...styles.image, ...imageDimensions}} source={imgSrc} />
           </View>
           <View style={styles.buttons}>
-            <Button title="Capture Text" onPress={recognizeTextFromImage} />
+            <Button title="Capture Text" onPress={() => recognizeTextFromImage({uri: imgSrc})} />
             <Button title="Cancel" onPress={() => setImgSrc(null)} />
           </View>
         </>

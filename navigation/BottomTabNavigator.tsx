@@ -1,13 +1,12 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-import Ionicons from 'react-native-ionicons'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import RecipesScreen from '../screens/RecipesScreen';
 import CaptureScreen from '../screens/CaptureScreen';
 import { BottomTabParamList, RecipesParamList, CaptureParamList } from '../types';
-import { Text } from 'react-native';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -29,21 +28,21 @@ export default function BottomTabNavigator() {
           borderTopWidth: 0,
           position: 'absolute',
           paddingHorizontal: 20,
-          backgroundColor: Colors[colorScheme].tabBarBackground,
+          //backgroundColor: Colors[colorScheme].tabBarBackground,
       }
       }}>
       <BottomTab.Screen
         name="TabOne"
         component={TabOneNavigator}
         options={{
-          tabBarIcon: ({ color }) => <Ionicons size={25} name="journal" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={25} name="notebook" color={color} />,
         }}
       />
       <BottomTab.Screen
         name="TabTwo"
         component={TabTwoNavigator}
         options={{
-          tabBarIcon: ({ color }) => <Ionicons size={25} name="camera" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={25} name="camera" color={color} />,
         }}
       />
     </BottomTab.Navigator>

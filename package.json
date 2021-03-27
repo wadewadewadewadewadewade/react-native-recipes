@@ -21,12 +21,13 @@
     "react-native": "^0.62.2",
     "react-native-gesture-handler": "^1.10.3",
     "react-native-image-crop-picker": "^0.32.2",
-    "react-native-ionicons": "^4.6.5",
+    "react-native-magnus": "^1.0.62",
     "react-native-progress": "^4.0.3",
     "react-native-progress-wheel": "^1.0.5",
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^2.18.1",
-    "react-native-tesseract-ocr": "^2.0.1"
+    "react-native-tesseract-ocr": "^2.0.1",
+    "react-native-vector-icons": "^8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10.4",
