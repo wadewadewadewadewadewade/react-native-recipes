@@ -1,4 +1,4 @@
-package com.recipes;
+package com.aproximation.recipes;
 
 import com.facebook.react.ReactActivity;
 

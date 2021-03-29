@@ -7,11 +7,20 @@ import useColorScheme from '../hooks/useColorScheme';
 import RecipesScreen from '../screens/RecipesScreen';
 import CaptureScreen from '../screens/CaptureScreen';
 import { BottomTabParamList, RecipesParamList, CaptureParamList } from '../types';
+import { Keyboard } from 'react-native';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
 export default function BottomTabNavigator() {
   const colorScheme = useColorScheme();
+  const [visible, setVisibility] = React.useState<boolean>(true);
+
+  Keyboard.addListener('keyboardDidShow', () => {
+    setVisibility(false)
+  })
+  Keyboard.addListener('keyboardDidHide', () => {
+    setVisibility(true)
+  })
 
   return (
     <BottomTab.Navigator
@@ -19,7 +28,7 @@ export default function BottomTabNavigator() {
       tabBarOptions={{
         activeTintColor: Colors[colorScheme].tint,
         showLabel: false,
-        style: {
+        style: visible ? {
           marginLeft: 100,
           marginRight: 100,
           marginBottom: 30,
@@ -30,7 +39,9 @@ export default function BottomTabNavigator() {
           position: 'absolute',
           paddingHorizontal: 20,
           //backgroundColor: Colors[colorScheme].tabBarBackground,
-      }
+        } : {
+          display: 'none'
+        }
       }}>
       <BottomTab.Screen
         name="TabOne"

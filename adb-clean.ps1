@@ -1,0 +1,1 @@
+netstat -ano | findstr :8081 | Select-String -Pattern '\\s+([0-9]+)$' | ForEach-Object {taskkill /PID $_.Matches[0].Groups[1].Value /F}

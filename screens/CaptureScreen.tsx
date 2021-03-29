@@ -1,15 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import {ScrollView, Image as ImageUtility, Button} from 'react-native';
-// @ts-ignore
-import AnimatedProgressWheel from 'react-native-progress-wheel';
-import TesseractOcr, {
-  LANG_ENGLISH,
-  useEventListener,
-  // @ts-ignore
-} from 'react-native-tesseract-ocr';
-import { Text, Div, Image } from 'react-native-magnus';
-import PickImage, { PickerType } from '../components/PickImage';
+import ml from '@react-native-firebase/ml';
+import { Text, Div, Image, Input } from 'react-native-magnus';
+import PickSource, { DataType, ImageType, PickerTypes } from '../components/PickImage';
 import layout from '../constants/Layout';
+import cheerio from 'cheerio';
+import { Keyboard } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import { AuthenticationContext, AuthUser } from '../context/Authentication';
+import { RecipeType } from './RecipesScreen'
 
 enum PickerPhase {
   Initial,
@@ -19,16 +18,19 @@ enum PickerPhase {
 }
 
 export default function CaptureScreen() {
+  const [source, setSource] = useState<string>('Image');
+  const [title, setTitle] = useState<string>('Unknown');
   const [phase, setPhase] = useState<PickerPhase>(PickerPhase.Initial);
-  const [progress, setProgress] = useState(0);
-  const [image, setImage] = useState<PickerType | undefined>(undefined);
+  const [image, setImage] = useState<ImageType | undefined>(undefined);
   const [imageWidth, setImageWidth] = useState<number>(-1);
   const [imageHeight, setImageHeight] = useState<number>(-1);
   const [text, setText] = useState<string>();
-
-  useEventListener('onProgressChange', (p: {percent: number}) => {
-    setProgress(p.percent / 100);
-  });
+  const [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
+  const value = useContext(AuthenticationContext);
+  let user: AuthUser = null;
+  if (value) {
+    user = value.user;
+  }
 
   useEffect(() => {
     if (image && image.path) {
@@ -42,24 +44,48 @@ export default function CaptureScreen() {
     }
   }, [image])
 
-  const recognizeTextFromImage = async (i: PickerType) => {
+  const saveRecipe = async () => {
+    if (text && text.length > 0) {
+      const recipe: RecipeType = {
+        title,
+        source,
+        recipe: text
+      };
+      await firestore().
+        collection('Users').
+        doc(user?.uid).
+        collection("Recipes").add(recipe);
+      setText(undefined);
+      setImage(undefined);
+      setPhase(PickerPhase.Initial);
+      
+    }
+  }
+
+  Keyboard.addListener('keyboardDidShow', () => {
+    setKeyboardOpen(true)
+  })
+  Keyboard.addListener('keyboardDidHide', () => {
+    setKeyboardOpen(false)
+  })
+
+  const textInputHeight = keyboardOpen 
+    ? layout.window.height - layout.statusBarHeight - layout.tabsHeight - 210
+    : layout.window.height - layout.statusBarHeight - layout.tabsHeight;
+
+  const recognizeTextFromImage = async (i: ImageType) => {
     setPhase(PickerPhase.Loading);
 
     try {
-      const tesseractOptions = {};
-      const recognizedText = await TesseractOcr.recognize(
-        i.path,
-        LANG_ENGLISH,
-        tesseractOptions,
-      );
-      setText(recognizedText);
+      const recognized = await ml().cloudDocumentTextRecognizerProcessImage(i.path);
+      console.log(JSON.stringify(recognized));
+      setText(recognized.text);
     } catch (err) {
       console.error(err);
       setText('');
     }
 
     setPhase(PickerPhase.Processed);
-    setProgress(0);
   };
 
   const maxImageDimensions = {
@@ -80,45 +106,64 @@ export default function CaptureScreen() {
     switch (phase) {
       case PickerPhase.Initial:
         return (
-          <PickImage onChange={(i: PickerType) => {
-            setImage(i)
-            setPhase(PickerPhase.Fetched)
+          <PickSource onChange={async (t: PickerTypes, d: DataType) => {
+            if (t === PickerTypes.Image) {
+              setImage(d as ImageType)
+              setSource('Image')
+              setPhase(PickerPhase.Fetched)
+            } else if (t === PickerTypes.Web) {
+              try {
+                const response = await fetch(d as string);
+                const html = await response.text();
+                const $ = cheerio.load(html);
+                const rawText = $('body').text()
+                setText(rawText.replace(/^(\s*\n){2,}/gm,'\n'));
+                setSource(d as string)
+                setTitle($('head title').text())
+                setPhase(PickerPhase.Processed)
+              } catch (ex) {
+                setPhase(PickerPhase.Initial)
+                console.error(JSON.stringify(ex))
+              }
+            }
           }} />
         );
       case PickerPhase.Fetched:
         return (
-          <>
-            <Div mb="lg">
-              {image && <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />}
-            </Div>
-            <Div row justifyContent={"center"} alignItems="center">
-              <Button title="Capture Text" onPress={() => image && recognizeTextFromImage(image)}/>
-              <Div mr="lg"></Div>
-              <Button title="Cancel" onPress={() => {
-                setImage(undefined)
-                setPhase(PickerPhase.Initial)
-              }}/>
-            </Div>
-          </>
+          <Div row m="lg" justifyContent={"center"} alignItems="center">
+            <Button title="Capture Text" onPress={() => image && recognizeTextFromImage(image)}/>
+            <Div mr="lg"></Div>
+            <Button title="Cancel" onPress={() => {
+              setImage(undefined)
+              setPhase(PickerPhase.Initial)
+            }}/>
+          </Div>
         );
       case PickerPhase.Loading:
         return (
           <Div alignSelf="center" h={layout.window.height - layout.statusBarHeight} justifyContent="center">
-            <AnimatedProgressWheel style={{display: 'flex'}} progress={progress} />
+            <Text>Loading...</Text>
           </Div>
         );
       case PickerPhase.Processed:
         return (
           <Div p="md">
-            <Text mb="lg">{text}</Text>
             <Div row justifyContent={"center"} alignItems="center">
-              <Button title="Save Recipe" onPress={() => {}}/>
+              <Button title="Save Recipe" onPress={() => saveRecipe()}/>
               <Div mr="lg"></Div>
-              <Button title="Choose Different Image" onPress={() => {
+              <Button title="Choose Different Source" onPress={() => {
                 setImage(undefined)
                 setPhase(PickerPhase.Initial)
               }}/>
             </Div>
+            <Input
+              h={textInputHeight}
+              editable
+              multiline
+              mt="lg"
+              value={text}
+              onChange={(e) => setText(e.nativeEvent.text)}
+            />
           </Div>
         );
     }
@@ -127,6 +172,11 @@ export default function CaptureScreen() {
   return (
     <ScrollView>
       {getPageContents()}
+      {image && (
+        <Div mb="lg">
+          <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />
+        </Div>
+      )}
     </ScrollView>
   );
 }

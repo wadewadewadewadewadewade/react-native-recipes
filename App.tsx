@@ -4,24 +4,32 @@ import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 import { ThemeProvider } from 'react-native-magnus';
+import AuthenticationContextProvider from './context/Authentication'
 
 const ElarnTheme = {
   colors: {
-    pink900: '#D84343',
+    buttonPrimary: '#FF44EE',
+    buttonPrimaryBg: '#FFF',
+    buttonSecondary: '#EEE',
+    buttonSecondaryBg: '#999',
+    buttonAlternative: '#999',
+    buttonAlternativeBg: '#FFF'
   }
 }
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
-
+  
   if (!isLoadingComplete) {
     return null;
   } else {
     return (
       <SafeAreaProvider>
         <ThemeProvider theme={ElarnTheme}>
-          <Navigation colorScheme={colorScheme} />
+          <AuthenticationContextProvider>
+            <Navigation colorScheme={colorScheme} />
+          </AuthenticationContextProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     );

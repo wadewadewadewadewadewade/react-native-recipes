@@ -3,7 +3,9 @@ import { Dimensions } from 'react-native';
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 
-const statusBarHeight = 75;
+const statusBarHeight = 100;
+
+const tabsHeight = 125
 
 export default {
   window: {
@@ -11,5 +13,6 @@ export default {
     height,
   },
   statusBarHeight,
+  tabsHeight,
   isSmallDevice: width < 375,
 };

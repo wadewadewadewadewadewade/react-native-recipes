@@ -2,7 +2,8 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
 import { ColorSchemeName } from 'react-native';
-
+import { Text } from 'react-native-magnus';
+import { AuthenticationContext } from '../context/Authentication';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import { RootStackParamList } from '../types';
 import BottomTabNavigator from './BottomTabNavigator';
@@ -12,11 +13,23 @@ import LinkingConfiguration from './LinkingConfiguration';
 // "Fundamentals" guide: https://reactnavigation.org/docs/getting-started
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
-    <NavigationContainer
-      linking={LinkingConfiguration}
-      theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootNavigator />
-    </NavigationContainer>
+    <AuthenticationContext.Consumer>
+      {(value) => {
+        if (value && value.user && value?.user?.emailVerified) {
+          return (
+            <NavigationContainer
+              linking={LinkingConfiguration}
+              theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <RootNavigator />
+            </NavigationContainer>
+          )
+        } else if (value && value.user) {
+          return (<Text>Please verify your email address by clicking the link in the email you were sent.</Text>)
+        } else {
+          return null
+        }
+      }}
+    </AuthenticationContext.Consumer>
   );
 }
 
