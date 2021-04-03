@@ -5,6 +5,7 @@ import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 import { ThemeProvider } from 'react-native-magnus';
 import AuthenticationContextProvider from './context/Authentication'
+import StorageContextProvider from './context/Authentication'
 
 const ElarnTheme = {
   colors: {
@@ -28,7 +29,9 @@ export default function App() {
       <SafeAreaProvider>
         <ThemeProvider theme={ElarnTheme}>
           <AuthenticationContextProvider>
-            <Navigation colorScheme={colorScheme} />
+            <StorageContextProvider>
+              <Navigation colorScheme={colorScheme} />
+            </StorageContextProvider>
           </AuthenticationContextProvider>
         </ThemeProvider>
       </SafeAreaProvider>

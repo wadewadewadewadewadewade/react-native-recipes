@@ -1,7 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { Button, Div, Input, Text } from 'react-native-magnus';
-import { Keyboard } from 'react-native';
 
 export type AuthUser = FirebaseAuthTypes.User | null;
 export const AuthenticationContext = createContext<{user: AuthUser, initializing: boolean} | null>(null);

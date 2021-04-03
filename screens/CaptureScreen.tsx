@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useContext} from 'react';
+import React, { useEffect, useState } from 'react';
 import {ScrollView, Image as ImageUtility, Button} from 'react-native';
 import ml from '@react-native-firebase/ml';
 import { Text, Div, Image, Input } from 'react-native-magnus';
@@ -6,9 +6,8 @@ import PickSource, { DataType, ImageType, PickerTypes } from '../components/Pick
 import layout from '../constants/Layout';
 import cheerio from 'cheerio';
 import { Keyboard } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import { AuthenticationContext, AuthUser } from '../context/Authentication';
 import { RecipeType } from './RecipesScreen'
+import { StorageContext } from '../context/Storage'
 
 enum PickerPhase {
   Initial,
@@ -26,11 +25,6 @@ export default function CaptureScreen() {
   const [imageHeight, setImageHeight] = useState<number>(-1);
   const [text, setText] = useState<string>();
   const [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
-  const value = useContext(AuthenticationContext);
-  let user: AuthUser = null;
-  if (value) {
-    user = value.user;
-  }
 
   useEffect(() => {
     if (image && image.path) {
@@ -51,10 +45,7 @@ export default function CaptureScreen() {
         source,
         recipe: text
       };
-      await firestore().
-        collection('Users').
-        doc(user?.uid).
-        collection("Recipes").add(recipe);
+      
       setText(undefined);
       setImage(undefined);
       setPhase(PickerPhase.Initial);
@@ -171,12 +162,24 @@ export default function CaptureScreen() {
 
   return (
     <ScrollView>
-      {getPageContents()}
-      {image && (
-        <Div mb="lg">
-          <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />
-        </Div>
-      )}
+      <StorageContext.Consumer>
+        {(value) => {
+          if (value && value.get) {
+            return (
+              <>
+                {getPageContents()}
+                {image && (
+                  <Div mb="lg">
+                    <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />
+                  </Div>
+                )}
+              </>
+            )
+          } else {
+            return (<Text>Please select a data source.</Text>)
+          }
+        }}
+      </StorageContext.Consumer>
     </ScrollView>
   );
 }

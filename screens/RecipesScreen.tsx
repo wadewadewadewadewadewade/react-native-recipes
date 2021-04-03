@@ -1,8 +1,7 @@
-import React, { useContext } from 'react';
-import firestore from '@react-native-firebase/firestore';
+import React from 'react';
 import { Div, Text } from 'react-native-magnus';
-import { AuthenticationContext, AuthUser } from '../context/Authentication';
 import { Link } from '@react-navigation/native';
+import { StorageContext } from '../context/Storage';
 
 export interface RecipeType {
   id?: string
@@ -23,26 +22,19 @@ const Recipe = ({id, title}: RecipeType) => (
 )
 
 export default function RecipesScreen() {
-  const value = useContext(AuthenticationContext);
-  let user: AuthUser = null;
-  if (value) {
-    user = value.user;
-  }
-  let recipes: Array<RecipeType> = []
-  React.useEffect(() => {
-    const recipesSubscriber = firestore().
-      collection('Users').
-      doc(user?.uid).
-      collection("Recipes").
-      onSnapshot((snap) => {
-        recipes = snap.docs.map(d => ({...d.data(), id: d.id} as RecipeType))
-      });
-    return () => recipesSubscriber()
-  }, [user])
-
   return (
-    <Div>
-      {recipes.map(r => (<Recipe {...r} />))}
-    </Div>
+    <StorageContext.Consumer>
+      {(value) => {
+        if (value && value.get) {
+          return (
+            <Div>
+              {value.get().then(r => r.map(r => (<Recipe {...r} />)))}
+            </Div>
+          )
+        } else {
+          return (<Text>Please select a data source.</Text>)
+        }
+      }}
+    </StorageContext.Consumer>
   );
 }
