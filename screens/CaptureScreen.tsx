@@ -6,7 +6,6 @@ import PickSource, { DataType, ImageType, PickerTypes } from '../components/Pick
 import layout from '../constants/Layout';
 import cheerio from 'cheerio';
 import { Keyboard } from 'react-native';
-import { RecipeType } from './RecipesScreen'
 import { StorageContext } from '../context/Storage'
 
 enum PickerPhase {
@@ -38,14 +37,11 @@ export default function CaptureScreen() {
     }
   }, [image])
 
+  let fileRecipe = (name: string, body: string) => new Promise<void>(r => r())
+
   const saveRecipe = async () => {
     if (text && text.length > 0) {
-      const recipe: RecipeType = {
-        title,
-        source,
-        recipe: text
-      };
-      
+      await fileRecipe(title + source, text)
       setText(undefined);
       setImage(undefined);
       setPhase(PickerPhase.Initial);
@@ -93,7 +89,8 @@ export default function CaptureScreen() {
   }
   maxImageDimensions.height = imageDimensions.height
 
-  const getPageContents = () => {
+  const getPageContents = (storeRecipe: (name: string, body: string) => Promise<void>) => {
+    fileRecipe = storeRecipe
     switch (phase) {
       case PickerPhase.Initial:
         return (
@@ -164,10 +161,10 @@ export default function CaptureScreen() {
     <ScrollView>
       <StorageContext.Consumer>
         {(value) => {
-          if (value && value.get) {
+          if (value && value.put) {
             return (
               <>
-                {getPageContents()}
+                {getPageContents(value.put)}
                 {image && (
                   <Div mb="lg">
                     <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />

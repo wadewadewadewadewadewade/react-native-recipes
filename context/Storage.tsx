@@ -19,7 +19,7 @@ const StorageProvider = ({ children } : { children: JSX.Element | null }) => {
   const [storage, setStorage] = useState<StoreType | undefined>(undefined);
   const [error, setError] = useState<any>();
 
-  // at some point we could add multipel storage
+  // at some point we could add multiple storage
   // endpoints and a way to select them here
   useEffect(() => {
     const initialize = async () => {
@@ -52,7 +52,14 @@ const StorageProvider = ({ children } : { children: JSX.Element | null }) => {
   
   return (
     <StorageContext.Provider
-      value={{get: storage?.listFiles, initialized, error}}
+      value={{
+        list: storage?.listFiles,
+        get: storage?.getFile,
+        put: storage?.saveFile,
+        delete: storage?.deleteFile,
+        initialized,
+        error
+    }}
     >
       {children}
     </StorageContext.Provider>

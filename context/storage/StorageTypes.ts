@@ -15,12 +15,18 @@ export enum InitializingPhases {
 export interface StoreType {
   type: StorageTypes
   listFiles: (searchTerm?: string) => Promise<Array<any>>
+  getFile: (fileId: string) => Promise<any>
+  saveFile: (name: string, body: string) => Promise<any>
+  deleteFile: (fileId: string) => Promise<void>
 }
 
 export type ErrorType = string
 
 export interface StorageContextType {
-  get?: (searchTerm?: string) => Promise<Array<any>>
+  list?: (searchTerm?: string) => Promise<Array<any>>
+  get?: (fileId: string) => Promise<any>
+  put?: (name: string, body: string) => Promise<any>
+  delete?: (fileId: string) => Promise<void>
   initialized: InitializingPhases
   error?: ErrorType
 }

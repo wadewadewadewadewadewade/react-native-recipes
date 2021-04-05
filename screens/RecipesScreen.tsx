@@ -28,7 +28,7 @@ export default function RecipesScreen() {
         if (value && value.get) {
           return (
             <Div>
-              {value.get().then(r => r.map(r => (<Recipe {...r} />)))}
+              {value.get().then(recipes => recipes.map(recipe => (<Recipe {...recipe} />)))}
             </Div>
           )
         } else {

@@ -84,3 +84,5 @@ web-build/
 # @end expo-cli
 
 google-services.json
+
+.env*

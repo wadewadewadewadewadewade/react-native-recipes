@@ -67,8 +67,45 @@ const listFiles = async (searchTerm?: string): Promise<Array<any>> => {
   return res.files;
 };
 
+ /**
+ * Save file.
+ */
+const saveFile = async (name: string, body: string): Promise<any> => {
+  const response = await gapi.client.drive.files.create({
+    resource: { name },
+    media:  { mimeType: 'text/plain', body },
+    fields: 'id'
+  })
+  const res = JSON.parse(response.body);
+  return res.file;
+};
+
+ /**
+ * Get file.
+ */
+const getFile = async (fileId: string): Promise<any> => {
+  const response = await gapi.client.drive.files.get({
+    fileId
+  })
+  const res = JSON.parse(response.body);
+  return res.file;
+};
+  
+ /**
+ * Delete file.
+ */
+const deleteFile = async (fileId: string): Promise<void> => {
+  await gapi.client.drive.files.delete({
+    fileId
+  })
+  return;
+};
+  
 export {
   initClient,
   signOut,
-  listFiles
+  listFiles,
+  saveFile,
+  getFile,
+  deleteFile
 }
