@@ -1,18 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, Image as ImageUtility, Button} from 'react-native';
 import ml from '@react-native-firebase/ml';
-import { Text, Div, Image, Input } from 'react-native-magnus';
-import PickSource, { DataType, ImageType, PickerTypes } from '../components/PickImage';
+import {Text, Div, Image, Input} from 'react-native-magnus';
+import PickSource, {
+  DataType,
+  ImageType,
+  PickerTypes,
+} from '../components/PickImage';
 import layout from '../constants/Layout';
 import cheerio from 'cheerio';
-import { Keyboard } from 'react-native';
-import { StorageContext } from '../context/Storage'
+import {Keyboard} from 'react-native';
+import {StorageContext} from '../context/Storage';
 
 enum PickerPhase {
   Initial,
   Fetched,
   Loading,
-  Processed
+  Processed,
 }
 
 export default function CaptureScreen() {
@@ -23,40 +27,28 @@ export default function CaptureScreen() {
   const [imageWidth, setImageWidth] = useState<number>(-1);
   const [imageHeight, setImageHeight] = useState<number>(-1);
   const [text, setText] = useState<string>();
-  const [keyboardOpen, setKeyboardOpen] = useState<boolean>(false)
+  const [keyboardOpen, setKeyboardOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (image && image.path) {
       ImageUtility.getSize(image.path, (width: number, height: number) => {
         setImageWidth(width);
         setImageHeight(height);
-      })
+      });
     } else {
       setImageWidth(-1);
       setImageHeight(-1);
     }
-  }, [image])
-
-  let fileRecipe = (name: string, body: string) => new Promise<void>(r => r())
-
-  const saveRecipe = async () => {
-    if (text && text.length > 0) {
-      await fileRecipe(title + source, text)
-      setText(undefined);
-      setImage(undefined);
-      setPhase(PickerPhase.Initial);
-      
-    }
-  }
+  }, [image]);
 
   Keyboard.addListener('keyboardDidShow', () => {
-    setKeyboardOpen(true)
-  })
+    setKeyboardOpen(true);
+  });
   Keyboard.addListener('keyboardDidHide', () => {
-    setKeyboardOpen(false)
-  })
+    setKeyboardOpen(false);
+  });
 
-  const textInputHeight = keyboardOpen 
+  const textInputHeight = keyboardOpen
     ? layout.window.height - layout.statusBarHeight - layout.tabsHeight - 210
     : layout.window.height - layout.statusBarHeight - layout.tabsHeight;
 
@@ -64,7 +56,9 @@ export default function CaptureScreen() {
     setPhase(PickerPhase.Loading);
 
     try {
-      const recognized = await ml().cloudDocumentTextRecognizerProcessImage(i.path);
+      const recognized = await ml().cloudDocumentTextRecognizerProcessImage(
+        i.path,
+      );
       console.log(JSON.stringify(recognized));
       setText(recognized.text);
     } catch (err) {
@@ -79,70 +73,101 @@ export default function CaptureScreen() {
     maxWidth: layout.window.width,
     maxHeight: layout.window.height * 0.5,
     width: layout.window.width,
-    height: layout.window.height * 0.5
-  }
+    height: layout.window.height * 0.5,
+  };
 
   const imageAspectRatio = imageHeight > 0 ? imageWidth / imageHeight : 1;
   const imageDimensions = {
-    width: imageAspectRatio > 0.5 ? maxImageDimensions.maxWidth : maxImageDimensions.maxWidth * imageAspectRatio,
-    height: imageAspectRatio > 0.5 ? maxImageDimensions.maxHeight / imageAspectRatio : maxImageDimensions.maxHeight,
-  }
-  maxImageDimensions.height = imageDimensions.height
+    width:
+      imageAspectRatio > 0.5
+        ? maxImageDimensions.maxWidth
+        : maxImageDimensions.maxWidth * imageAspectRatio,
+    height:
+      imageAspectRatio > 0.5
+        ? maxImageDimensions.maxHeight / imageAspectRatio
+        : maxImageDimensions.maxHeight,
+  };
+  maxImageDimensions.height = imageDimensions.height;
 
-  const getPageContents = (storeRecipe: (name: string, body: string) => Promise<void>) => {
-    fileRecipe = storeRecipe
+  const getPageContents = (
+    storeRecipe: (name: string, body: string) => Promise<void>,
+  ) => {
     switch (phase) {
       case PickerPhase.Initial:
         return (
-          <PickSource onChange={async (t: PickerTypes, d: DataType) => {
-            if (t === PickerTypes.Image) {
-              setImage(d as ImageType)
-              setSource('Image')
-              setPhase(PickerPhase.Fetched)
-            } else if (t === PickerTypes.Web) {
-              try {
-                const response = await fetch(d as string);
-                const html = await response.text();
-                const $ = cheerio.load(html);
-                const rawText = $('body').text()
-                setText(rawText.replace(/^(\s*\n){2,}/gm,'\n'));
-                setSource(d as string)
-                setTitle($('head title').text())
-                setPhase(PickerPhase.Processed)
-              } catch (ex) {
-                setPhase(PickerPhase.Initial)
-                console.error(JSON.stringify(ex))
+          <PickSource
+            onChange={async (t: PickerTypes, d: DataType) => {
+              if (t === PickerTypes.Image) {
+                setImage(d as ImageType);
+                setSource('Image');
+                setPhase(PickerPhase.Fetched);
+              } else if (t === PickerTypes.Web) {
+                try {
+                  const response = await fetch(d as string);
+                  const html = await response.text();
+                  const $ = cheerio.load(html);
+                  const rawText = $('body').text();
+                  setText(rawText.replace(/^(\s*\n){2,}/gm, '\n'));
+                  setSource(d as string);
+                  setTitle($('head title').text());
+                  setPhase(PickerPhase.Processed);
+                } catch (ex) {
+                  setPhase(PickerPhase.Initial);
+                  console.error(JSON.stringify(ex));
+                }
               }
-            }
-          }} />
+            }}
+          />
         );
       case PickerPhase.Fetched:
         return (
-          <Div row m="lg" justifyContent={"center"} alignItems="center">
-            <Button title="Capture Text" onPress={() => image && recognizeTextFromImage(image)}/>
-            <Div mr="lg"></Div>
-            <Button title="Cancel" onPress={() => {
-              setImage(undefined)
-              setPhase(PickerPhase.Initial)
-            }}/>
+          <Div row m="lg" justifyContent={'center'} alignItems="center">
+            <Button
+              title="Capture Text"
+              onPress={() => image && recognizeTextFromImage(image)}
+            />
+            <Div mr="lg" />
+            <Button
+              title="Cancel"
+              onPress={() => {
+                setImage(undefined);
+                setPhase(PickerPhase.Initial);
+              }}
+            />
           </Div>
         );
       case PickerPhase.Loading:
         return (
-          <Div alignSelf="center" h={layout.window.height - layout.statusBarHeight} justifyContent="center">
+          <Div
+            alignSelf="center"
+            h={layout.window.height - layout.statusBarHeight}
+            justifyContent="center">
             <Text>Loading...</Text>
           </Div>
         );
       case PickerPhase.Processed:
         return (
           <Div p="md">
-            <Div row justifyContent={"center"} alignItems="center">
-              <Button title="Save Recipe" onPress={() => saveRecipe()}/>
-              <Div mr="lg"></Div>
-              <Button title="Choose Different Source" onPress={() => {
-                setImage(undefined)
-                setPhase(PickerPhase.Initial)
-              }}/>
+            <Div row justifyContent={'center'} alignItems="center">
+              <Button
+                title="Save Recipe"
+                onPress={async () => {
+                  if (text && text.length > 0) {
+                    await storeRecipe(title + source, text);
+                    setText(undefined);
+                    setImage(undefined);
+                    setPhase(PickerPhase.Initial);
+                  }
+                }}
+              />
+              <Div mr="lg" />
+              <Button
+                title="Choose Different Source"
+                onPress={() => {
+                  setImage(undefined);
+                  setPhase(PickerPhase.Initial);
+                }}
+              />
             </Div>
             <Input
               h={textInputHeight}
@@ -155,7 +180,7 @@ export default function CaptureScreen() {
           </Div>
         );
     }
-  }
+  };
 
   return (
     <ScrollView>
@@ -167,13 +192,17 @@ export default function CaptureScreen() {
                 {getPageContents(value.put)}
                 {image && (
                   <Div mb="lg">
-                    <Image h={imageDimensions.height} w={imageDimensions.width} source={{uri: image.path}} />
+                    <Image
+                      h={imageDimensions.height}
+                      w={imageDimensions.width}
+                      source={{uri: image.path}}
+                    />
                   </Div>
                 )}
               </>
-            )
+            );
           } else {
-            return (<Text>Please select a data source.</Text>)
+            return <Text>Please select a data source.</Text>;
           }
         }}
       </StorageContext.Consumer>
