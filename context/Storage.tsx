@@ -1,55 +1,71 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, {createContext, useContext, useEffect, useState} from 'react';
 import {
   StorageContextType,
   InitializingPhases,
   StoreType,
   storageTypes,
-  StorageTypeIndexes
+  StorageTypeIndexes,
 } from './storage/StorageTypes';
 import {
-  initClient as initGoogleDrive,
   listFiles as listGoogleDrive,
-  signOut as signOutGoogleDrive
-} from './storage/GoogleDrive'
+  initialize as initializeGoogleDrive,
+  initializied as GoogleDriveInitialized,
+  getFile as getFileGoogleDrive,
+  saveFile as saveFileGoogleDrive,
+  deleteFile as deleteFileGoogleDrive,
+} from './storage/GoogleDrive';
+import {AuthenticationContext} from './Authentication';
 
-export const StorageContext = createContext<StorageContextType | null>(null)
+export const StorageContext = createContext<StorageContextType | null>(null);
 
-const StorageProvider = ({ children } : { children: JSX.Element | null }) => {
-  const [initialized, setInitialized] = useState<InitializingPhases>(InitializingPhases.NOT_INITIALIZED);
+const StorageProvider = ({children}: {children: JSX.Element | null}) => {
+  const [initialized, setInitialized] = useState<InitializingPhases>(
+    InitializingPhases.NOT_INITIALIZED,
+  );
   const [storage, setStorage] = useState<StoreType | undefined>(undefined);
   const [error, setError] = useState<any>();
+  const authContext = useContext(AuthenticationContext);
 
   // at some point we could add multiple storage
   // endpoints and a way to select them here
   useEffect(() => {
     const initialize = async () => {
       try {
-        await initGoogleDrive((status: boolean) => {
-          if (status && initialized !== InitializingPhases.INITIALIZIED) {
-            setInitialized(InitializingPhases.INITIALIZIED)
-            setStorage({
-              type: storageTypes[StorageTypeIndexes.GOOGLEDRIVE],
-              listFiles: listGoogleDrive
-            })
-          } else if (!status && initialized !== InitializingPhases.NOT_INITIALIZED) {
-            setInitialized(InitializingPhases.NOT_INITIALIZED)
-            setStorage(undefined)
-          }
-        })
-        setInitialized(InitializingPhases.INITIALIZIED)
-        return signOutGoogleDrive
+        authContext &&
+          authContext.user &&
+          initializeGoogleDrive(await authContext.user.getIdToken());
+        if (
+          GoogleDriveInitialized &&
+          initialized !== InitializingPhases.INITIALIZIED
+        ) {
+          setInitialized(InitializingPhases.INITIALIZIED);
+          setStorage({
+            type: storageTypes[StorageTypeIndexes.GOOGLEDRIVE],
+            listFiles: listGoogleDrive,
+            getFile: getFileGoogleDrive,
+            saveFile: saveFileGoogleDrive,
+            deleteFile: deleteFileGoogleDrive,
+          });
+        } else if (
+          !GoogleDriveInitialized &&
+          initialized !== InitializingPhases.NOT_INITIALIZED
+        ) {
+          setInitialized(InitializingPhases.NOT_INITIALIZED);
+          setStorage(undefined);
+        }
+        setError(undefined);
       } catch (ex) {
         if (initialized !== InitializingPhases.NOT_INITIALIZED) {
-          setInitialized(InitializingPhases.NOT_INITIALIZED)
-          setStorage(undefined)
-          setError(ex)
+          setInitialized(InitializingPhases.NOT_INITIALIZED);
+          setStorage(undefined);
+          setError(ex);
         }
       }
-    }
-    setInitialized(InitializingPhases.INITIALIZING)
-    initialize()
-  }, [])
-  
+    };
+    setInitialized(InitializingPhases.INITIALIZING);
+    initialize();
+  }, [authContext, initialized]);
+
   return (
     <StorageContext.Provider
       value={{
@@ -58,12 +74,11 @@ const StorageProvider = ({ children } : { children: JSX.Element | null }) => {
         put: storage?.saveFile,
         delete: storage?.deleteFile,
         initialized,
-        error
-    }}
-    >
+        error,
+      }}>
       {children}
     </StorageContext.Provider>
-  )
-}
+  );
+};
 
-export default StorageProvider
+export default StorageProvider;
